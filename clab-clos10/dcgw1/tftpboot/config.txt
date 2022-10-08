@@ -1,0 +1,392 @@
+# TiMOS-B-21.7.R1 both/x86_64 Nokia 7750 SR Copyright (c) 2000-2021 Nokia.
+# All rights reserved. All use subject to applicable license agreements.
+# Built on Thu Jul 29 14:54:01 PDT 2021 by builder in /builds/c/217B/R1/panos/main/sros
+# Configuration format version 21.7 revision 0
+
+# Generated WED NOV 10 16:21:47 2021 UTC
+
+exit all
+configure
+#--------------------------------------------------
+echo "System Configuration"
+#--------------------------------------------------
+    system
+        name "dcgw1"
+        netconf
+            auto-config-save
+            no shutdown
+        exit
+        snmp
+            streaming
+                no shutdown
+            exit
+            packet-size 9216
+        exit
+        time
+            sntp
+                shutdown
+            exit
+            zone UTC
+        exit
+        bluetooth
+            module A
+            exit
+            power off
+        exit
+    exit
+#--------------------------------------------------
+echo "System Security Configuration"
+#--------------------------------------------------
+    system
+        security
+            profile "administrative"
+                netconf
+                    base-op-authorization
+                        action
+                        cancel-commit
+                        close-session
+                        commit
+                        copy-config
+                        create-subscription
+                        delete-config
+                        discard-changes
+                        edit-config
+                        get
+                        get-config
+                        get-data
+                        get-schema
+                        kill-session
+                        lock
+                        validate
+                    exit
+                exit
+                entry 10
+                    match "configure system security"
+                    action permit
+                exit
+                entry 20
+                    match "show system security"
+                    action permit
+                exit
+                entry 30
+                    match "tools perform security"
+                    action permit
+                exit
+                entry 40
+                    match "tools dump security"
+                    action permit
+                exit
+                entry 50
+                    match "admin system security"
+                    action permit
+                exit
+                entry 100
+                    match "configure li"
+                    action deny
+                exit
+                entry 110
+                    match "show li"
+                    action deny
+                exit
+                entry 111
+                    match "clear li"
+                    action deny
+                exit
+                entry 112
+                    match "tools dump li"
+                    action deny
+                exit
+            exit
+            user "admin"
+                password "$2y$10$TQrZlpBDra86.qoexZUzQeBXDY1FcdDhGWdD9lLxMuFyPVSm0OGy6"
+                access console ftp snmp netconf grpc
+                console
+                    member "administrative"
+                exit
+            exit
+            user "vrnetlab"
+                password "$2y$10$gEn.yuWvI.w5PSIrDAGHk.r7P0gfdsNh3zgPNzYU/R68XMNrbZMjq"
+                access console netconf
+                console
+                    member "administrative"
+                    member "default"
+                exit
+            exit
+            per-peer-queuing
+            dist-cpu-protection
+                policy "_default-port-policy" type port create
+                exit
+                policy "_default-access-policy" create
+                exit
+                policy "_default-network-policy" create
+                exit
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "System Login Control Configuration"
+#--------------------------------------------------
+    system
+        login-control
+            ssh
+                inbound-max-sessions 30
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "Log Configuration"
+#--------------------------------------------------
+    log
+    exit
+#--------------------------------------------------
+echo "System gRPC Configuration"
+#--------------------------------------------------
+    system
+        grpc
+            allow-unsecure-connection
+            gnmi
+                auto-config-save
+                no shutdown
+            exit
+            rib-api
+                no shutdown
+            exit
+            no shutdown
+        exit
+    exit
+#--------------------------------------------------
+echo "Card Configuration"
+#--------------------------------------------------
+    card 1
+        card-type iom-1
+        mda 1
+            mda-type me12-100gb-qsfp28
+            no shutdown
+        exit
+        no shutdown
+    exit
+#--------------------------------------------------
+echo "Connector Configuration"
+#--------------------------------------------------
+    port 1/1/c1
+        connector
+            breakout c1-100g
+        exit
+        no shutdown
+    exit
+    port 1/1/c2
+        connector
+            breakout c1-100g
+        exit
+        no shutdown
+    exit
+    port 1/1/c3
+        shutdown
+    exit
+    port 1/1/c4
+        shutdown
+    exit
+    port 1/1/c5
+        shutdown
+    exit
+    port 1/1/c6
+        shutdown
+    exit
+    port 1/1/c7
+        shutdown
+    exit
+    port 1/1/c8
+        shutdown
+    exit
+    port 1/1/c9
+        shutdown
+    exit
+    port 1/1/c10
+        shutdown
+    exit
+    port 1/1/c11
+        shutdown
+    exit
+    port 1/1/c12
+        shutdown
+    exit
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+    port 1/1/c1/1
+        ethernet
+            mode hybrid
+            encap-type dot1q
+        exit
+        no shutdown
+    exit
+    port 1/1/c2/1
+        ethernet
+            mode hybrid
+            encap-type dot1q
+        exit
+        no shutdown
+    exit
+    port A/3
+        shutdown
+        ethernet
+        exit
+    exit
+    port A/4
+        shutdown
+    exit
+#--------------------------------------------------
+echo "System Sync-If-Timing Configuration"
+#--------------------------------------------------
+    system
+        sync-if-timing
+            begin
+            commit
+        exit
+    exit
+#--------------------------------------------------
+echo "Management Router Configuration"
+#--------------------------------------------------
+    router management
+    exit
+
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+    router Base
+        interface "system"
+            address 10.20.30.1/32
+            no shutdown
+        exit
+        interface "to-spine1-1/10"
+            address 10.1.0.31/31
+            port 1/1/c1/1:0
+            no shutdown
+        exit
+        interface "to-spine2-1/10"
+            address 10.1.0.33/31
+            port 1/1/c2/1:0
+            no shutdown
+        exit
+        autonomous-system 500
+    exit
+
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+    service
+        customer 1 name "1" create
+            description "Default customer"
+        exit
+        vprn 31 name "31" customer 1 create
+            interface "bh-vpls" create
+            exit
+            interface "loopback" create
+            exit
+        exit
+        vpls 10 name "vpls-10" customer 1 create
+            allow-ip-int-bind
+                vxlan-ipv4-tep-ecmp
+            exit
+            vxlan instance 1 vni 2 create
+            exit
+            bgp
+                route-target export target:1:2 import target:1:2
+            exit
+            bgp-evpn
+                no mac-advertisement
+                ip-route-advertisement
+                evi 10
+                vxlan bgp 1 vxlan-instance 1
+                    no shutdown
+                exit
+            exit
+            stp
+                shutdown
+            exit
+            no shutdown
+        exit
+        vprn 31 name "31" customer 1 create
+            ecmp 8
+            route-distinguisher 1:31
+            vrf-target target:1:31
+            interface "bh-vpls" create
+                vpls "vpls-10"
+                    evpn-tunnel
+                exit
+            exit
+            interface "loopback" create
+                address 1.1.1.1/32
+                loopback
+            exit
+            no shutdown
+        exit
+        vpls 10 name "vpls-10" customer 1 create
+            allow-ip-int-bind
+            exit
+        exit
+    exit
+
+#--------------------------------------------------
+echo "Router (Service Side) Configuration"
+#--------------------------------------------------
+    router Base
+#--------------------------------------------------
+echo "Policy Configuration"
+#--------------------------------------------------
+    policy-options
+        begin
+        policy-statement "export-direct"
+            entry 10
+                from
+                    protocol direct
+                exit
+                action accept
+                exit
+            exit
+        exit
+        commit
+    exit
+#--------------------------------------------------
+echo "BGP Configuration"
+#--------------------------------------------------
+    bgp
+        min-route-advertisement 1
+        rapid-withdrawal
+        rapid-update
+        group "evpn"
+            family evpn
+            type internal
+            cluster 10.10.10.10
+            local-as 115200
+            peer-as 115200
+            neighbor 1.1.1.1
+            exit
+            neighbor 1.1.1.2
+            exit
+            neighbor 1.1.1.3
+            exit
+            neighbor 1.1.1.4
+            exit
+        exit
+        group "ipv4-underlay"
+            export "export-direct"
+            peer-as 404
+            neighbor 10.1.0.30
+            exit
+            neighbor 10.1.0.32
+            exit
+        exit
+        no shutdown
+    exit
+exit
+
+#--------------------------------------------------
+echo "Log all events for service vprn Configuration"
+#--------------------------------------------------
+    log
+    exit
+
+exit all
+
+# Finished WED NOV 10 16:21:47 2021 UTC
