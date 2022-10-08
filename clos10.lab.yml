@@ -1,0 +1,122 @@
+name: clos10
+prefix: ""
+
+mgmt:
+  network: clos10
+  ipv4_subnet: 172.80.80.0/24
+
+topology:
+  kinds:
+    srl:
+      image: ghcr.io/nokia/srlinux
+    vr-sros:
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1
+      license: SR_OS_VSR_License_Valid_until_2023-02-08.txt
+    linux:
+      image: ghcr.io/hellt/network-multitool
+
+  nodes:
+    leaf1:
+      kind: srl
+      type: ixrd2
+      group: leaf
+      mgmt_ipv4: 172.80.80.11
+    leaf2:
+      kind: srl
+      type: ixrd2
+      group: leaf
+      mgmt_ipv4: 172.80.80.12
+    leaf3:
+      kind: srl
+      type: ixrd2
+      group: leaf
+      mgmt_ipv4: 172.80.80.13
+      binds:
+        - __clabDir__/leaf3/config/yum-installs/usr/bin/httping:/usr/bin/httping
+        - __clabDir__/leaf3/config/yum-installs/usr/lib64/libfftw3.so.3:/usr/lib64/libfftw3.so.3
+      env:
+        PATH: ${PATH}:/etc/opt/srlinux/new-dnf/bin
+
+    dcgw1:
+      kind: vr-sros
+      type: sr-1
+      group: rr
+      mgmt_ipv4: 172.80.80.31
+
+    spine1:
+      kind: srl
+      type: ixr6
+      group: spine
+      mgmt_ipv4: 172.80.80.21
+    spine2:
+      kind: srl
+      type: ixr6
+      group: spine
+      mgmt_ipv4: 172.80.80.22
+
+    client1:
+      kind: linux
+      mgmt_ipv4: 172.80.80.41
+      group: server
+      binds:
+        - __clabDir__/client1.sh:/client1.sh
+      exec:
+        - bash /client1.sh
+    client2:
+      kind: linux
+      mgmt_ipv4: 172.80.80.42
+      group: server
+      binds:
+        - __clabDir__/client2.sh:/client2.sh
+      exec:
+        - bash /client2.sh
+
+    ### Telemetry Stack ###
+
+    gnmic:
+      kind: linux
+      #mgmt_ipv4: 172.80.80.51
+      image: ghcr.io/karimra/gnmic:0.24.0
+      #binds:
+      #  - gnmic-config.yml:/gnmic-config.yml:ro
+      #cmd: --config /gnmi-config.yml --log subscribe
+      #group: "10"
+
+    # prometheus:
+    #   kind: linux
+    #   mgmt_ipv4: 172.80.80.52
+    #   image: prom/prometheus:v2.35.0
+    #   binds:
+    #     - configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    #   cmd: --config.file=/etc/prometheus/prometheus.yml
+    #   ports:
+    #     - 9090:9090
+    #   group: "10"
+    #
+    # grafana:
+    #   kind: linux
+    #   mgmt_ipv4: 172.80.80.53
+    #   image: grafana/grafana:8.5.2
+    #   binds:
+    #     - configs/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+    #     - configs/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboard.yaml:ro
+    #     - configs/grafana/dashboards:/var/lib/grafana/dashboards
+    #   #  - configs/grafana/grafana-flowcharting:/var/lib/grafana/plugins/grafana-flowcharting
+    #   ports:
+    #     - 3000:3000
+    #   group: "10"
+
+  links:
+    - endpoints: ["leaf1:e1-1", "spine1:e1-1"]
+    - endpoints: ["leaf1:e1-2", "spine2:e1-1"]
+    - endpoints: ["leaf2:e1-1", "spine1:e1-2"]
+    - endpoints: ["leaf2:e1-2", "spine2:e1-2"]
+    - endpoints: ["leaf3:e1-1", "spine1:e1-3"]
+    - endpoints: ["leaf3:e1-2", "spine2:e1-3"]
+
+    - endpoints: ["spine1:e1-10", "dcgw1:eth1"]
+    - endpoints: ["spine2:e1-10", "dcgw1:eth2"]
+
+    - endpoints: ["client1:eth1", "leaf3:e1-3"]
+    - endpoints: ["client1:eth2", "leaf1:e1-4"]
+    - endpoints: ["client2:eth1", "leaf2:e1-4"]
